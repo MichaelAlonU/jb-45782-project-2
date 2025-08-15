@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin's application</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+    <script src="app.js"></script>
+</head>
+
+<body>
+    <header>
+        <h1> Cryptonite </h1>
+    </header>
+    <div class="parallax">
+
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane"
+                    type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Home</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane"
+                    type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">live
+                    reports</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact-tab-pane"
+                    type="button" role="tab" aria-controls="contact-tab-pane" aria-selected="false">About</button>
+            </li>
+            <!-- <li class="nav-item" role="presentation">
+                <button class="nav-link" id="disabled-tab" data-bs-toggle="tab" data-bs-target="#disabled-tab-pane"
+                    type="button" role="tab" aria-controls="disabled-tab-pane" aria-selected="false"
+                    disabled>Disabled</button>
+            </li>  ERASEEEEEEEEEEEE-->
+        </ul>
+
+
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab"
+                tabindex="0">
+
+
+                <div class="container">
+                    <form id="search-form">
+                        <div class="d-flex"> <input id="search-input" class="form-control" type="search"
+                                placeholder="Search" aria-label="Search">
+                            <button class="btn btn-primary" type="submit">Search</button>
+                        </div>
+                    </form>
+
+                    <div class="row w-100" id="coin-cards">
+                        <div class="col-12 col-sm-4 col-md-3 box" id="1">
+                            <div class="card w-100 h-100">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Cryp1</h5>
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-1">
+                                        <label class="form-check-label" for="flexSwitchCheckDefault-1"></label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-subtitle">name1</h6>
+                                    <br>
+                                    <a href="#" class="btn btn-primary">More info</a>
+                                </div>
+                            </div>
+                        </div>
+                        <!--ERASEEEEEEEEE <div class="col-12 col-sm-4 col-md-3 box" id="2">
+                            <div class="card w-100 h-100">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Cryp2</h5>
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-1">
+                                        <label class="form-check-label" for="flexSwitchCheckDefault-1"></label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="card-subtitle">name2</h6>
+                                    <br>
+                                    <a href="#" class="btn btn-primary">More info</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4 col-md-3 box" id="3">
+                            <div class="card w-100 h-100">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Cryp3</h5>
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-1">
+                                        <label class="form-check-label" for="flexSwitchCheckDefault-1"></label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="text-muted">name3</h6>
+                                    <br>
+                                    <a href="#" class="btn btn-primary">More info</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4 col-md-3 box" id="4">
+                            <div class="card w-100 h-100">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Cryp4</h5>
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-1">
+                                        <label class="form-check-label" for="flexSwitchCheckDefault-1"></label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="text-muted">name4</h6>
+                                    <br>
+                                    <a href="#" class="btn btn-primary">More info</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4 col-md-3 box" id="4">
+                            <div class="card w-100 h-100">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Cryp4</h5>
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-1">
+                                        <label class="form-check-label" for="flexSwitchCheckDefault-1"></label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="text-muted">name4</h6>
+                                    <br>
+                                    <a href="#" class="btn btn-primary">More info</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4 col-md-3 box" id="4">
+                            <div class="card w-100 h-100">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <h5 class="card-title mb-0">Cryp4</h5>
+                                    <div class="form-check form-switch ms-2">
+                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-1">
+                                        <label class="form-check-label" for="flexSwitchCheckDefault-1"></label>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <h6 class="text-muted">name4</h6>
+                                    <br>
+                                    <a href="#" class="btn btn-primary">More info</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4 col-md-3 box" id="1">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-1">
+                                <label class="form-check-label" for="flexSwitchCheckDefault-1"></label>
+                            </div>
+
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked-1" checked>
+                                <label class="form-check-label" for="flexSwitchCheckChecked-1"> if pushed > js</label>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-4 col-md-3 box" id="2">Cryp2</div>
+                        <div class="col-12 col-sm-4 col-md-3 box" id="3">
+
+                            <h6>כרטיס מידע</h6>
+                            <p>טקסט קצר...</p>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#infoModal">
+                                More info
+                            </button> -->
+
+                            <!-- Modal -->
+                            <div class="modal fade" id="infoModal" tabindex="-1" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title">מידע נוסף</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="סגור"></button>
+                                        </div>
+                                        <div class="modal-body" id="modalContent">
+                                            נטען מידע מה־API...
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">סגור</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <script>
+                                const modalContent = document.getElementById('modalContent');
+                                document.getElementById('infoModal').addEventListener('show.bs.modal', async () => {
+                                    modalContent.textContent = 'טוען...';
+                                    // כאן אתה טוען את המידע מה-API
+                                    const data = await fetch('https://api.example.com/data')
+                                        .then(res => res.json());
+                                    modalContent.textContent = JSON.stringify(data, null, 2);
+                                });
+                            </script>
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
+                tab
+                1
+            </div>
+            <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
+                <p> Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis, optio dignissimos ratione
+                    in,
+                    nisi nesciunt, iusto minima cupiditate minus hic maiores tenetur exercitationem pariatur
+                    corporis
+                    suscipit non deserunt placeat culpa.
+            </div>
+            <!-- <div class="tab-pane fade" id="disabled-tab-pane" role="tabpanel" aria-labelledby="disabled-tab"
+                tabindex="0"> ERASE
+                tab 3</div> -->
+        </div>
+    </div>
+</body>
+
+</html>
