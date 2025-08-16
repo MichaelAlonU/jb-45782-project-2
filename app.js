@@ -12,40 +12,42 @@
             data = JSON.parse(data)
             const { createdAt } = data
             console.log(new Date(createdAt).getTime() + CACHE_AGE_IN_SECONDS * 1000)
-            console.log(new Date())
+            console.log(data)
             if ((new Date(createdAt).getTime() + CACHE_AGE_IN_SECONDS * 1000) > new Date().getTime()) {
                 console.log('cache hit')
-                return data
+                console.log(data.data)
+                return data.data.data;
             }
         }
         data = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } }).then(response => response.json())
-        localStorage.setItem(url, JSON.stringify({ data: JSON.stringify(data), createdAt: new Date() }))
+        localStorage.setItem(url, JSON.stringify({ data, createdAt: new Date() }))
         console.log('cache miss')
         console.log(data)
-        return data
+        return data.data
     }
     const getNumOfCoinsData = (tokenData, num) => {
+        console.log(!Array.isArray(tokenData))
         if (!Array.isArray(tokenData) || tokenData.length === 0) {
+            console.log(`something's wrong, No tokens!!`)
             return [];
         }
-        const numInArray = Math.min(num, tokenData.length);
-        return tokenData.slice(0, numInArray);
+        if (num < tokenData.length) {
+            return tokenData.slice(0, num);
+        }
+        else {
+            console.log(`there aren't enough tokens in the API, returned max instead`)
+            return tokenData
+        }
     }
-    const generateCoinsHTML = ({ data }, coinSearchValue) => {
-        const coinsHtml = ``;
-        if (!coinSearchValue) {  //generate all coins
-            let coinCounter = 0;
-            coinsHtml = data.map(({ name, symbol }) => {
-                coinCounter++;
-                if (coinCounter < 100) {
-                    htmlCoinCard = `
-                        <div class="col-12 col-sm-4 col-md-3 box" id="${coinCounter}">
+    const drawSingleCoinCardHtml = (name, symbol) => {
+        return `
+                        <div class="col-12 col-sm-4 col-md-3 box" id="${symbol}">
                             <div class="card w-100 h-100">
                                 <div class="card-header d-flex align-items-center justify-content-between">
                                     <h5 class="card-title mb-0">${symbol}</h5>
                                     <div class="form-check form-switch ms-2">
-                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-${coinCounter}">
-                                        <label class="form-check-label" for="flexSwitchCheckDefault-${coinCounter}"></label>
+                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-${symbol}">
+                                        <label class="form-check-label" for="flexSwitchCheckDefault-${symbol}"></label>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -55,15 +57,22 @@
                                 </div>
                             </div>
                         </div>
-                        `}
-                return htmlCoinCard;
+                `
+    }
+    const generateCoinsHTML = (data, coinSearchValue) => {
+        let coinsHtml = ``;
+        let htmlSingleCoinCard = ``;
+        if (!coinSearchValue) {  //generate all coins in array (already reduced to 100)
+            coinsHtml = data.map(({ name, symbol }) => {
+                htmlSingleCoinCard = drawSingleCoinCardHtml(name, symbol);
+                return htmlSingleCoinCard;
             }).join(``);
             return coinsHtml;
         }
         else {
-            foundCoin = data.find(() => { });
-            if (foundCoin) {
-
+            const foundCoin = data.find(token => token.symbol == coinSearchValue);
+            if (foundCoin !== undefined) {
+                return drawSingleCoinCardHtml(foundCoin.name, foundCoin.symbol)
             }
             else {
                 return `<h1> No coin's were found, you can try again or 
@@ -75,46 +84,54 @@
     }
 
     const coinsContainer = document.getElementById("coin-cards");
-
     const renderCoinsHTML = html => {
         coinsContainer.innerHTML = html;
-    }
+        const allCoinsBtn = document.getElementById("show-all-coins");
+        if (allCoinsBtn) {
+            allCoinsBtn.addEventListener("click", getAllCoins)}
+        }
 
     // all coins data for home tab
     const getAllCoins = async () => {
+    try {
+        const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
+        console.log(tokens)
+        const reducedTokens = getNumOfCoinsData(tokens, 100);
+        console.log(reducedTokens)
+        let html = generateCoinsHTML(reducedTokens)
+        renderCoinsHTML(html)
+    }
+    catch (error) {
+        alert(`Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}`)
+        // document.getElementById('countries-container').innerHTML = `<h5> Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}</h5>`
+    }
+}
+
+const searchInput = document.getElementById("search-input");
+const searchForm = document.getElementById("search-form");
+console.log("Form element:", document.getElementById("search-form"));
+
+
+searchForm.addEventListener("submit", async event => {
+    event.preventDefault();
+    const coinSearchId = searchInput.value.trim().toUpperCase();
+    if (coinSearchId !== "") {
         try {
             const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
             const reducedTokens = getNumOfCoinsData(tokens, 100);
-            let html = generateCoinsHTML(reducedTokens)
+            let html = generateCoinsHTML(reducedTokens, coinSearchId)
             renderCoinsHTML(html)
         }
         catch (error) {
             alert(`Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}`)
-            // document.getElementById('countries-container').innerHTML = `<h5> Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}</h5>`
         }
     }
+})
 
-    const searchInput = document.getElementById("search-input");
-    const searchForm = document.getElementById("search-form");
-    const allCoinsBtn = document.getElementById("show-all-coins");
-    searchForm.addEventListener("submit", async event => {
-        event.preventDefault();
-        const coinSearchId = searchInput.value.trim();
-        if (coinSearchId !== "") {
-            if (!tokens.find(() => { })) {nothing's found}
-                else {
-                    const html = generateCoinsHTML(tokens);
-                    renderCoinsHTML(html);
-                }
-            }
+searchInput.addEventListener("input", () => {   //if erased the search text input, show all coins again
+    if (searchInput.value === "") getAllCoins();
+})
 
-        })
-    searchInput.addEventListener("input", () => {
-        if (searchInput.value === "") {
-            coinsContainer.innerHTML = getAllCoins();
-        }
-        allCoinsBtn.addEventListener("click", () => coinsContainer.innerHTML = getAllCoins());
+getAllCoins(); //mayB unrelevent because of erased seach text, WAITING FOR RUN CHECK
 
-        getAllCoins();
-
-    })()
+}) ()
