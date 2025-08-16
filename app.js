@@ -41,22 +41,28 @@
     }
     const drawSingleCoinCardHtml = (name, symbol) => {
         return `
-                        <div class="col-12 col-sm-4 col-md-3 box" id="${symbol}">
-                            <div class="card w-100 h-100">
-                                <div class="card-header d-flex align-items-center justify-content-between">
-                                    <h5 class="card-title mb-0">${symbol}</h5>
-                                    <div class="form-check form-switch ms-2">
-                                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-${symbol}">
-                                        <label class="form-check-label" for="flexSwitchCheckDefault-${symbol}"></label>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <h6 class="card-subtitle">${name}</h6>
-                                    <br>
-                                    <a href="#" class="btn btn-primary">More info</a>
-                                </div>
-                            </div>
-                        </div>
+        <div class="col-12 col-sm-4 col-md-3 box" id="${symbol}">
+            <div class="card w-100 h-100 position-relative">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <h5 class="card-title mb-0">${symbol}</h5>
+                    <div class="form-check form-switch ms-2">
+                        <input class="form-check-input" type="checkbox" id="flexSwitchCheckDefault-${symbol}">
+                        <label class="form-check-label" for="flexSwitchCheckDefault-${symbol}"></label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6 class="card-subtitle">${name}</h6>
+                    <br>
+                    <a href="#" class="btn btn-primary more-info-btn" data-symbol="${symbol}">More info</a>
+                </div>
+                <div class="collapse-overlay collapse" id="collapse-${symbol}">
+                <button type="button" class="close-collapse-btn" data-symbol="${symbol}">&times;</button>
+                    <div class="card card-body p-3" id="info-${symbol}">
+                        Loading...
+                    </div>
+                </div>
+            </div>
+        </div>
                 `
     }
     const generateCoinsHTML = (data, coinSearchValue) => {
@@ -87,51 +93,99 @@
     const renderCoinsHTML = html => {
         coinsContainer.innerHTML = html;
         const allCoinsBtn = document.getElementById("show-all-coins");
-        if (allCoinsBtn) {
-            allCoinsBtn.addEventListener("click", getAllCoins)}
+        if (allCoinsBtn) {  //only when search didn't find anything, otherwise it's null because it doesn't exist (in the DOM)
+            allCoinsBtn.addEventListener("click", getAllCoins)
         }
+        // Add event listeners for "More info" buttons
+        document.querySelectorAll('.more-info-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const symbol = btn.getAttribute('data-symbol');
+                const collapseDiv = document.getElementById(`collapse-${symbol}`);
+                const infoDiv = document.getElementById(`info-${symbol}`);
+
+                // Toggle collapse
+                if (collapseDiv.classList.contains('show')) {
+                    collapseDiv.classList.remove('show');
+                    return;
+                }
+                // Hide any other open overlays
+                document.querySelectorAll('.collapse-overlay.show').forEach(el => el.classList.remove('show'));
+
+                collapseDiv.classList.add('show');
+                infoDiv.innerHTML = "Loading...";
+                try {
+                    const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY);
+                    const coin = tokens.find(token => token.symbol === symbol);
+                    if (coin) {
+                        infoDiv.innerHTML = `
+                        <strong>Name:</strong> ${coin.name}<br>
+                        <strong>Symbol:</strong> ${coin.symbol}<br>
+                        <strong>Price USD:</strong> $${parseFloat(coin.priceUsd).toFixed(2)}<br>
+                        <strong>Market Cap:</strong> $${parseFloat(coin.marketCapUsd).toLocaleString()}<br>
+                        <strong>Supply:</strong> ${parseFloat(coin.supply).toLocaleString()}<br>
+                    `;
+                    } else {
+                        infoDiv.innerHTML = "No additional info found.";
+                    }
+                } catch (err) {
+                    infoDiv.innerHTML = "Failed to load info.";
+                }
+            });
+        });
+        document.querySelectorAll('.close-collapse-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const symbol = btn.getAttribute('data-symbol');
+                const collapseDiv = document.getElementById(`collapse-${symbol}`);
+                if (collapseDiv) {
+                    collapseDiv.classList.remove('show');
+                }
+            });
+        });
+    }
 
     // all coins data for home tab
     const getAllCoins = async () => {
-    try {
-        const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
-        console.log(tokens)
-        const reducedTokens = getNumOfCoinsData(tokens, 100);
-        console.log(reducedTokens)
-        let html = generateCoinsHTML(reducedTokens)
-        renderCoinsHTML(html)
-    }
-    catch (error) {
-        alert(`Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}`)
-        // document.getElementById('countries-container').innerHTML = `<h5> Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}</h5>`
-    }
-}
-
-const searchInput = document.getElementById("search-input");
-const searchForm = document.getElementById("search-form");
-console.log("Form element:", document.getElementById("search-form"));
-
-
-searchForm.addEventListener("submit", async event => {
-    event.preventDefault();
-    const coinSearchId = searchInput.value.trim().toUpperCase();
-    if (coinSearchId !== "") {
         try {
             const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
+            console.log(tokens)
             const reducedTokens = getNumOfCoinsData(tokens, 100);
-            let html = generateCoinsHTML(reducedTokens, coinSearchId)
+            console.log(reducedTokens)
+            let html = generateCoinsHTML(reducedTokens)
             renderCoinsHTML(html)
         }
         catch (error) {
             alert(`Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}`)
+            // document.getElementById('countries-container').innerHTML = `<h5> Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}</h5>`
         }
     }
-})
 
-searchInput.addEventListener("input", () => {   //if erased the search text input, show all coins again
-    if (searchInput.value === "") getAllCoins();
-})
+    const searchInput = document.getElementById("search-input");
+    const searchForm = document.getElementById("search-form");
+    console.log("Form element:", document.getElementById("search-form"));
 
-getAllCoins(); //mayB unrelevent because of erased seach text, WAITING FOR RUN CHECK
 
-}) ()
+    searchForm.addEventListener("submit", async event => {
+        event.preventDefault();
+        const coinSearchId = searchInput.value.trim().toUpperCase();
+        if (coinSearchId !== "") {
+            try {
+                const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
+                const reducedTokens = getNumOfCoinsData(tokens, 100);
+                let html = generateCoinsHTML(reducedTokens, coinSearchId)
+                renderCoinsHTML(html)
+            }
+            catch (error) {
+                alert(`Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}`)
+            }
+        }
+    })
+
+    searchInput.addEventListener("input", () => {   //if erased the search text input, show all coins again
+        if (searchInput.value === "") getAllCoins();
+    })
+
+    getAllCoins(); //mayB unrelevent because of erased seach text, WAITING FOR RUN CHECK
+
+})()
