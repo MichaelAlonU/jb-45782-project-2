@@ -5,7 +5,41 @@
     const API_KEY = 'dab64beddf0b0eb28835141a18654de41cca1a50e950d60876c6d419b46fa709'
     // const CACHE_AGE_IN_SECONDS = 30
     const CACHE_AGE_IN_SECONDS = 9999999
+    const progressBarHTML = () => `
+            <div id="progress-bar" class="progress-bar-overlay">
+                <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
 
+    /*        `
+                <div class="progress-bar-overlay d-flex justify-content-center align-items-center p-3">
+                  <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
+                     <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+                `;              */
+    const showProgressBar = () => {
+        if (!document.getElementById('progress-bar')) {
+            document.body.innerHTML += `
+            <div id="progress-bar" class="progress-bar-overlay">
+                <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        `;
+        } else {
+            document.getElementById('progress-bar').style.display = 'flex';
+        }
+    };
+
+    const hideProgressBar = () => {
+        const progress = document.getElementById('progress-bar');
+        if (progress) {
+            progress.style.display = 'none';
+        }
+    };
     const getCoinsData = async (url, apiKey) => {
         let data = localStorage.getItem(url)
         if (data) {
@@ -113,7 +147,11 @@
                 document.querySelectorAll('.collapse-overlay.show').forEach(el => el.classList.remove('show'));
 
                 collapseDiv.classList.add('show');
-                infoDiv.innerHTML = "Loading...";
+                // infoDiv.innerHTML = progressBarHTML();
+                if (infoDiv) {
+                    infoDiv.innerHTML = progressBarHTML();
+                }
+
                 try {
                     const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY);
                     const coin = tokens.find(token => token.symbol === symbol);
@@ -130,7 +168,10 @@
                     }
                 } catch (err) {
                     infoDiv.innerHTML = "Failed to load info.";
+                } finally {
+                    hideProgressBar();
                 }
+
             });
         });
         document.querySelectorAll('.close-collapse-btn').forEach(btn => {
@@ -147,6 +188,7 @@
 
     // all coins data for home tab
     const getAllCoins = async () => {
+        showProgressBar()
         try {
             const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
             console.log(tokens)
@@ -159,6 +201,9 @@
             alert(`Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}`)
             // document.getElementById('countries-container').innerHTML = `<h5> Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}</h5>`
         }
+        finally {
+            hideProgressBar();
+        }
     }
 
     const searchInput = document.getElementById("search-input");
@@ -170,6 +215,7 @@
         event.preventDefault();
         const coinSearchId = searchInput.value.trim().toUpperCase();
         if (coinSearchId !== "") {
+            showProgressBar()
             try {
                 const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
                 const reducedTokens = getNumOfCoinsData(tokens, 100);
@@ -178,7 +224,10 @@
             }
             catch (error) {
                 alert(`Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}`)
+            } finally {
+                hideProgressBar();
             }
+
         }
     })
 
@@ -186,6 +235,5 @@
         if (searchInput.value === "") getAllCoins();
     })
 
-    getAllCoins(); //mayB unrelevent because of erased seach text, WAITING FOR RUN CHECK
-
+    getAllCoins();
 })()
