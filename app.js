@@ -1,66 +1,50 @@
 "use strict";
 
 (async () => {
-
+    console.log(`start of IFFIE ! `)
     const API_KEY = 'dab64beddf0b0eb28835141a18654de41cca1a50e950d60876c6d419b46fa709'
     // const CACHE_AGE_IN_SECONDS = 30
     const CACHE_AGE_IN_SECONDS = 9999999
     const progressBarHTML = () => `
-            <div id="progress-bar" class="progress-bar-overlay">
                 <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-            </div>
         `;
 
-    /*        `
-                <div class="progress-bar-overlay d-flex justify-content-center align-items-center p-3">
-                  <div class="spinner-border text-primary" role="status" style="width: 2rem; height: 2rem;">
-                     <span class="visually-hidden">Loading...</span>
-                  </div>
-                </div>
-                `;              */
     const showProgressBar = () => {
-        if (!document.getElementById('progress-bar')) {
-            document.body.innerHTML += `
-            <div id="progress-bar" class="progress-bar-overlay">
-                <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        `;
-        } else {
+        if (document.getElementById('progress-bar')) {
+            document.getElementById("progress-bar").innerHTML = progressBarHTML();
             document.getElementById('progress-bar').style.display = 'flex';
         }
     };
 
     const hideProgressBar = () => {
         const progress = document.getElementById('progress-bar');
-        if (progress) {
-            progress.style.display = 'none';
-        }
+        if (progress) progress.style.display = 'none';
     };
     const getCoinsData = async (url, apiKey) => {
         let data = localStorage.getItem(url)
         if (data) {
             data = JSON.parse(data)
-            const { createdAt } = data
+            const { data: cachedData, createdAt } = data
             console.log(new Date(createdAt).getTime() + CACHE_AGE_IN_SECONDS * 1000)
             console.log(data)
             if ((new Date(createdAt).getTime() + CACHE_AGE_IN_SECONDS * 1000) > new Date().getTime()) {
-                console.log('cache hit')
-                console.log(data.data)
-                return data.data.data;
+                console.log('cache hit, retriveing data from cache')
+                console.log(cachedData)
+                // console.log(apiData.data)
+                return cachedData;  //because it's a object with timestamp, and data.
             }
         }
         data = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } }).then(response => response.json())
-        localStorage.setItem(url, JSON.stringify({ data, createdAt: new Date() }))
+        data = data.data
+        localStorage.setItem(url, JSON.stringify({data, createdAt: new Date() }))
         console.log('cache miss')
         console.log(data)
-        return data.data
+        return data.data || data
     }
     const getNumOfCoinsData = (tokenData, num) => {
-        console.log(!Array.isArray(tokenData))
+        console.log(`some one called get num of coins to reduce coins ` + !Array.isArray(tokenData))
         if (!Array.isArray(tokenData) || tokenData.length === 0) {
             console.log(`something's wrong, No tokens!!`)
             return [];
@@ -102,6 +86,7 @@
     const generateCoinsHTML = (data, coinSearchValue) => {
         let coinsHtml = ``;
         let htmlSingleCoinCard = ``;
+        console.log(`just before creating HTML, here is the search: ${coinSearchValue}`)
         if (!coinSearchValue) {  //generate all coins in array (already reduced to 100)
             coinsHtml = data.map(({ name, symbol }) => {
                 htmlSingleCoinCard = drawSingleCoinCardHtml(name, symbol);
@@ -115,20 +100,20 @@
                 return drawSingleCoinCardHtml(foundCoin.name, foundCoin.symbol)
             }
             else {
-                return `<h1> No coin's were found, you can try again or 
+                return `<h1> No coin's were found, you can  
                     <span id="show-all-coins" style="color:blue; cursor:pointer;"> press here </span>
-                    to see all coins</h1>`
+                    to see all coins or try again </h1>`
             }
         }
 
     }
 
-    const coinsContainer = document.getElementById("coin-cards");
     const renderCoinsHTML = html => {
+        const coinsContainer = document.getElementById("coin-cards");
         coinsContainer.innerHTML = html;
-        const allCoinsBtn = document.getElementById("show-all-coins");
-        if (allCoinsBtn) {  //only when search didn't find anything, otherwise it's null because it doesn't exist (in the DOM)
-            allCoinsBtn.addEventListener("click", getAllCoins)
+        const ShowAllCoinsAgainBtn = document.getElementById("show-all-coins");
+        if (ShowAllCoinsAgainBtn) {  //only when search didn't find anything, otherwise it's null because it doesn't exist (in the DOM)
+            ShowAllCoinsAgainBtn.addEventListener("click", getAllCoins)
         }
         // Add event listeners for "More info" buttons
         document.querySelectorAll('.more-info-btn').forEach(btn => {
@@ -147,21 +132,32 @@
                 document.querySelectorAll('.collapse-overlay.show').forEach(el => el.classList.remove('show'));
 
                 collapseDiv.classList.add('show');
-                // infoDiv.innerHTML = progressBarHTML();
                 if (infoDiv) {
                     infoDiv.innerHTML = progressBarHTML();
                 }
 
                 try {
                     const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY);
+                    const tokensRates = await getCoinsData('https://rest.coincap.io/v3/rates', API_KEY)
                     const coin = tokens.find(token => token.symbol === symbol);
+                    let coinEurRate, coinIlsRate, priceEur, priceIls;
+                    if (!Array.isArray(tokensRates)) {
+                        console.warn('tokensRates is not an array!', tokensRates);
+                    } else {
+                        coinEurRate = tokensRates.find(rate => rate.symbol === "EUR");
+                        coinIlsRate = tokensRates.find(rate => rate.symbol === "ILS"); 
+                        priceEur = parseFloat(coin.priceUsd) / parseFloat(coinEurRate.rateUsd);
+                        priceIls = parseFloat(coin.priceUsd) / parseFloat(coinIlsRate.rateUsd);
+
+                    }
+                    console.log(coinEurRate, coinIlsRate)
                     if (coin) {
                         infoDiv.innerHTML = `
                         <strong>Name:</strong> ${coin.name}<br>
                         <strong>Symbol:</strong> ${coin.symbol}<br>
                         <strong>Price USD:</strong> $${parseFloat(coin.priceUsd).toFixed(2)}<br>
-                        <strong>Market Cap:</strong> $${parseFloat(coin.marketCapUsd).toLocaleString()}<br>
-                        <strong>Supply:</strong> ${parseFloat(coin.supply).toLocaleString()}<br>
+                        <strong>Price EUR:</strong> ${coinEurRate.currencySymbol}${priceEur.toFixed(2)}<br>
+                        <strong>Price ILS:</strong> ${priceIls.toFixed(2)} ${coinIlsRate.currencySymbol}<br>
                     `;
                     } else {
                         infoDiv.innerHTML = "No additional info found.";
@@ -188,6 +184,7 @@
 
     // all coins data for home tab
     const getAllCoins = async () => {
+        console.log(`some one activated get all coins and it's starting to run....`)
         showProgressBar()
         try {
             const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
@@ -195,11 +192,11 @@
             const reducedTokens = getNumOfCoinsData(tokens, 100);
             console.log(reducedTokens)
             let html = generateCoinsHTML(reducedTokens)
+            console.log(`some one activated get all coins and it's almost finished this is html:`);
             renderCoinsHTML(html)
         }
         catch (error) {
             alert(`Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}`)
-            // document.getElementById('countries-container').innerHTML = `<h5> Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}</h5>`
         }
         finally {
             hideProgressBar();
@@ -208,11 +205,9 @@
 
     const searchInput = document.getElementById("search-input");
     const searchForm = document.getElementById("search-form");
-    console.log("Form element:", document.getElementById("search-form"));
-
-
     searchForm.addEventListener("submit", async event => {
         event.preventDefault();
+        console.log(`searchhhhhhhhhhhhhhhhhhhhh`)
         const coinSearchId = searchInput.value.trim().toUpperCase();
         if (coinSearchId !== "") {
             showProgressBar()
@@ -220,6 +215,7 @@
                 const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
                 const reducedTokens = getNumOfCoinsData(tokens, 100);
                 let html = generateCoinsHTML(reducedTokens, coinSearchId)
+                console.log(html)
                 renderCoinsHTML(html)
             }
             catch (error) {
@@ -235,5 +231,16 @@
         if (searchInput.value === "") getAllCoins();
     })
 
+    /*    const getRateValues = async () => {
+            try {
+                const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
+                const tokensRates = await getCoinsData('https://rest.coincap.io/v3/rates', API_KEY)
+                console.log(tokensRates)
+            }
+            catch{
+    
+            }
+    }*/
     getAllCoins();
+    console.log(`last`)
 })()
