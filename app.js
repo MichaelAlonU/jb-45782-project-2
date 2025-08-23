@@ -33,12 +33,12 @@
                 console.log('cache hit, retriveing data from cache')
                 console.log(cachedData)
                 // console.log(apiData.data)
-                return cachedData;  //because it's a object with timestamp, and data.
+                return cachedData.data;  //because it's a object with timestamp, and data.
             }
         }
         data = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } }).then(response => response.json())
-        data = data.data
-        localStorage.setItem(url, JSON.stringify({data, createdAt: new Date() }))
+        data = data.data //.data   ????
+        localStorage.setItem(url, JSON.stringify({ data, createdAt: new Date() }))
         console.log('cache miss')
         console.log(data)
         return data.data || data
@@ -145,7 +145,7 @@
                         console.warn('tokensRates is not an array!', tokensRates);
                     } else {
                         coinEurRate = tokensRates.find(rate => rate.symbol === "EUR");
-                        coinIlsRate = tokensRates.find(rate => rate.symbol === "ILS"); 
+                        coinIlsRate = tokensRates.find(rate => rate.symbol === "ILS");
                         priceEur = parseFloat(coin.priceUsd) / parseFloat(coinEurRate.rateUsd);
                         priceIls = parseFloat(coin.priceUsd) / parseFloat(coinIlsRate.rateUsd);
 
@@ -155,9 +155,9 @@
                         infoDiv.innerHTML = `
                         <strong>Name:</strong> ${coin.name}<br>
                         <strong>Symbol:</strong> ${coin.symbol}<br>
-                        <strong>Price USD:</strong> $${parseFloat(coin.priceUsd).toFixed(2)}<br>
-                        <strong>Price EUR:</strong> ${coinEurRate.currencySymbol}${priceEur.toFixed(2)}<br>
-                        <strong>Price ILS:</strong> ${priceIls.toFixed(2)} ${coinIlsRate.currencySymbol}<br>
+                        <strong>Price USD:</strong> $${Number(parseFloat(coin.priceUsd).toFixed(2)).toLocaleString()}<br>
+                        <strong>Price EUR:</strong> ${coinEurRate.currencySymbol}${Number(priceEur.toFixed(2)).toLocaleString()}<br>
+                        <strong>Price ILS:</strong> ${Number(priceIls.toFixed(2)).toLocaleString()} ${coinIlsRate.currencySymbol}<br>
                     `;
                     } else {
                         infoDiv.innerHTML = "No additional info found.";
@@ -189,7 +189,7 @@
         try {
             const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
             console.log(tokens)
-            const reducedTokens = getNumOfCoinsData(tokens, 100);
+            const reducedTokens = getNumOfCoinsData(tokens, 99);
             console.log(reducedTokens)
             let html = generateCoinsHTML(reducedTokens)
             console.log(`some one activated get all coins and it's almost finished this is html:`);
@@ -213,7 +213,7 @@
             showProgressBar()
             try {
                 const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
-                const reducedTokens = getNumOfCoinsData(tokens, 100);
+                const reducedTokens = getNumOfCoinsData(tokens, 99);
                 let html = generateCoinsHTML(reducedTokens, coinSearchId)
                 console.log(html)
                 renderCoinsHTML(html)
@@ -223,7 +223,6 @@
             } finally {
                 hideProgressBar();
             }
-
         }
     })
 
@@ -231,16 +230,62 @@
         if (searchInput.value === "") getAllCoins();
     })
 
-    /*    const getRateValues = async () => {
-            try {
-                const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
-                const tokensRates = await getCoinsData('https://rest.coincap.io/v3/rates', API_KEY)
-                console.log(tokensRates)
+    let activeToggles = [];
+    document.addEventListener("change", (event) => {
+        if (event.target.classList.contains("form-check-input")) {
+            const checkbox = event.target;
+            const symbol = checkbox.id.replace("flexSwitchCheckDefault-", "");
+
+            if (checkbox.checked) {
+                handleToggleOn(symbol, checkbox);
+            } else {
+                handleToggleOff(symbol);
             }
-            catch{
-    
-            }
-    }*/
+        }
+    });
+    function handleToggleOn(symbol, checkbox) {
+        if (activeToggles.length >= 5) {
+            checkbox.checked = false; // immediately revert
+            showLimitModal(symbol);
+            return;
+        }
+
+        activeToggles.push(symbol);
+        updateLiveReports();
+    }
+    function handleToggleOff(symbol) {
+        activeToggles = activeToggles.filter(s => s !== symbol);
+        updateLiveReports();
+    }
+    function showLimitModal(newSymbol) {
+        const modalBody = document.getElementById("checked-coins");
+        modalBody.innerHTML = activeToggles.map(sym => `
+                                                    <tr>
+                                            <th> ${sym} &nbsp&nbsp</th>
+                                            <th> <button class="btn btn-sm btn-danger remove-toggle" data-symbol="${sym}">Remove</button> </th>
+                                                    </tr> ` ).join("");
+
+        const modal = new bootstrap.Modal(document.getElementById("limit-modal"));
+        modal.show();
+
+        // add click listeners for "Remove" buttons
+        modalBody.querySelectorAll(".remove-toggle").forEach(btn => {
+            btn.addEventListener("click", () => {
+                handleToggleOff(btn.dataset.symbol);
+                document.getElementById(`flexSwitchCheckDefault-${btn.dataset.symbol}`).checked = false;
+                document.getElementById(`flexSwitchCheckDefault-${newSymbol}`).checked = true;
+                handleToggleOn(newSymbol, document.getElementById(`flexSwitchCheckDefault-${newSymbol}`));
+                modal.hide();
+            });
+        });
+    }
+    function updateLiveReports() {
+        const container = document.getElementById("live-reports-container");
+        container.innerHTML = activeToggles.map(s => `<div>${s}</div>`).join("");
+    }
+
+
+
     getAllCoins();
     console.log(`last`)
 })()

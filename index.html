@@ -27,8 +27,9 @@
                     type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Home</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile-tab-pane"
-                    type="button" role="tab" aria-controls="profile-tab-pane" aria-selected="false">live
+                <button class="nav-link" id="live-reports-tab" data-bs-toggle="tab"
+                    data-bs-target="#live-reports-tab-pane" type="button" role="tab"
+                    aria-controls="live-reports-tab-pane" aria-selected="false">live
                     reports</button>
             </li>
             <li class="nav-item" role="presentation">
@@ -52,13 +53,39 @@
                     </form>
                     <div class="row w-100" id="coin-cards">
                     </div>
+                    <div class="modal fade" id="limit-modal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Limit Reached</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body" id="limit-modal-body">
+                                    <div>live reports supports maximum of five
+                                        coins, if you want to add this coin you can deselect one of the others:
+                                    </div>
+                                    <table>
+                                        <tbody id="checked-coins">
+                                        </tbody>
+                                    </table>
+                                    <div> </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
-        tab
-        1
+    <div class="tab-pane fade" id="live-reports-tab-pane" role="tabpanel" aria-labelledby="live-reports-tab"
+        tabindex="0">
+
+
+        <div id="live-reports-container"> </div>
+
+
+
+
     </div>
     <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
         <p> Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis, optio dignissimos ratione
@@ -67,11 +94,7 @@
             corporis
             suscipit non deserunt placeat culpa.
     </div>
-    <!-- <div class="tab-pane fade" id="disabled-tab-pane" role="tabpanel" aria-labelledby="disabled-tab"
-                tabindex="0"> ERASE
-                tab 3</div> -->
-    </div>
-    </div>
+
 </body>
 
 </html>
