@@ -12,6 +12,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
         crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script src="app.js" defer></script>
 </head>
 
@@ -49,6 +51,7 @@
                         <div class="d-flex"> <input id="search-input" class="form-control" type="search"
                                 placeholder="Search" aria-label="Search">
                             <button class="btn btn-primary" type="submit">Search</button>
+                            <button class="btn btn-primary" id="clear"> Clear selected coins </button>
                         </div>
                     </form>
                     <div class="row w-100" id="coin-cards">
@@ -81,7 +84,9 @@
         tabindex="0">
 
 
-        <div id="live-reports-container"> </div>
+        <div id="live-reports-container">
+            <canvas id="live-reports-chart"></canvas>
+        </div>
 
 
 

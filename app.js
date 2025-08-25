@@ -33,7 +33,7 @@
                 console.log('cache hit, retriveing data from cache')
                 console.log(cachedData)
                 // console.log(apiData.data)
-                return cachedData.data;  //because it's a object with timestamp, and data.
+                return cachedData //.data;  //because it's a object with timestamp, and data.
             }
         }
         data = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } }).then(response => response.json())
@@ -87,7 +87,7 @@
         let coinsHtml = ``;
         let htmlSingleCoinCard = ``;
         console.log(`just before creating HTML, here is the search: ${coinSearchValue}`)
-        if (!coinSearchValue) {  //generate all coins in array (already reduced to 100)
+        if (!coinSearchValue) {  //generate all coins in array (already reduced)
             coinsHtml = data.map(({ name, symbol }) => {
                 htmlSingleCoinCard = drawSingleCoinCardHtml(name, symbol);
                 return htmlSingleCoinCard;
@@ -99,6 +99,22 @@
             if (foundCoin !== undefined) {
                 return drawSingleCoinCardHtml(foundCoin.name, foundCoin.symbol)
             }
+
+            /* To allow search also by name, and show all relevant coins change this "else" with:
+                const searchValue = coinSearchValue.toLowerCase();
+                const foundCoins = data.filter(token => {
+                    return (
+                        token.symbol.toLowerCase().includes(searchValue) ||
+                        token.name.toLowerCase().includes(searchValue)
+                    );
+                });
+                if (foundCoins.length > 0) {
+                    coinsHtml = foundCoins.map(({ name, symbol }) => {
+                        return drawSingleCoinCardHtml(name, symbol);
+                    }).join(``);
+                    return coinsHtml;
+    
+                */
             else {
                 return `<h1> No coin's were found, you can  
                     <span id="show-all-coins" style="color:blue; cursor:pointer;"> press here </span>
@@ -128,7 +144,6 @@
                     collapseDiv.classList.remove('show');
                     return;
                 }
-                // Hide any other open overlays
                 document.querySelectorAll('.collapse-overlay.show').forEach(el => el.classList.remove('show'));
 
                 collapseDiv.classList.add('show');
@@ -148,15 +163,14 @@
                         coinIlsRate = tokensRates.find(rate => rate.symbol === "ILS");
                         priceEur = parseFloat(coin.priceUsd) / parseFloat(coinEurRate.rateUsd);
                         priceIls = parseFloat(coin.priceUsd) / parseFloat(coinIlsRate.rateUsd);
-
                     }
                     console.log(coinEurRate, coinIlsRate)
                     if (coin) {
                         infoDiv.innerHTML = `
                         <strong>Name:</strong> ${coin.name}<br>
                         <strong>Symbol:</strong> ${coin.symbol}<br>
-                        <strong>Price USD:</strong> $${Number(parseFloat(coin.priceUsd).toFixed(2)).toLocaleString()}<br>
-                        <strong>Price EUR:</strong> ${coinEurRate.currencySymbol}${Number(priceEur.toFixed(2)).toLocaleString()}<br>
+                        <strong>Price USD:</strong> ${Number(parseFloat(coin.priceUsd).toFixed(2)).toLocaleString()}$<br>
+                        <strong>Price EUR:</strong> ${Number(priceEur.toFixed(2)).toLocaleString()} ${coinEurRate.currencySymbol}<br>
                         <strong>Price ILS:</strong> ${Number(priceIls.toFixed(2)).toLocaleString()} ${coinIlsRate.currencySymbol}<br>
                     `;
                     } else {
@@ -219,7 +233,7 @@
                 renderCoinsHTML(html)
             }
             catch (error) {
-                alert(`Woops, something's wrong.. looks like there's a problem with the coins API ${error.message}`)
+                alert(`Woops, something's wrong.. looks like there's a problem with the coins API [error: ${error.message}]`)
             } finally {
                 hideProgressBar();
             }
@@ -231,6 +245,8 @@
     })
 
     let activeToggles = [];
+    //    document.getElementById("clear").addEventListener("click", activeToggles.clear()) //see if it's stop `checked` false or stay true 
+
     document.addEventListener("change", (event) => {
         if (event.target.classList.contains("form-check-input")) {
             const checkbox = event.target;
@@ -251,11 +267,11 @@
         }
 
         activeToggles.push(symbol);
-        updateLiveReports();
+        //        updateLiveReports();
     }
     function handleToggleOff(symbol) {
         activeToggles = activeToggles.filter(s => s !== symbol);
-        updateLiveReports();
+        //       updateLiveReports();
     }
     function showLimitModal(newSymbol) {
         const modalBody = document.getElementById("checked-coins");
@@ -279,13 +295,103 @@
             });
         });
     }
-    function updateLiveReports() {
-        const container = document.getElementById("live-reports-container");
-        container.innerHTML = activeToggles.map(s => `<div>${s}</div>`).join("");
+
+    let liveChart = null;
+    let chartTime = 0;
+    let updateCoinValueInterval = null;
+
+    function initLiveReportsChart() {
+        const ctx = document.getElementById("live-reports-chart").getContext("2d");
+        liveChart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                animation: false,
+                responsive: true,
+                scales: {
+                    x: {
+                        title: { display: true, text: "Time (sec)" }
+                    },
+                    y: {
+                        title: { display: true, text: "Price (USD)" }
+                    }
+                },
+                plugins: {
+                    legend: { position: "top" }
+                }
+            }
+        });
     }
 
+    function getRandomColor() {
+        return `hsl(${Math.floor(Math.random() * 360)}, 70%, 50%)`;
+    }
 
+    //updating the dataSets according to the active toggles array and showing the graph.
+    function updateLiveReports() {
 
+        if (!liveChart) initLiveReportsChart();
+
+        liveChart.data.datasets = activeToggles.map(sym => {
+            let existing = liveChart.data.datasets.find(dataSet => dataSet.label === sym);
+            return existing || {
+                label: sym,
+                data: [],
+                borderColor: getRandomColor(),
+                tension: 0.2
+            };
+        });
+
+        liveChart.update();
+        if (!updateCoinValueInterval) {
+            updateCoinValueInterval = setInterval(async () => {
+                if (!liveChart || activeToggles.length === 0) return;
+
+                chartTime += 2;
+                liveChart.data.labels.push(chartTime);
+
+                for (let chosenCoinDS of liveChart.data.datasets) {
+                    const price = await fetchCoinPrice(chosenCoinDS.label);
+                    chosenCoinDS.data.push(price || null);
+                }
+                liveChart.update();
+            }, 6000);
+        }
+    }
+
+    async function fetchCoinPrice(symbol) {
+        try {
+            const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY);
+            const coin = tokens.find(token => token.symbol === symbol);
+            return coin ? parseFloat(coin.priceUsd) : null;
+        } catch (err) {
+            console.error("Price fetch failed:", err);
+            return null;
+        }
+    }
+
+    const liveReportsTab = document.getElementById("live-reports-tab");
+    liveReportsTab.addEventListener("show.bs.tab", () => {
+        resetLiveReports();
+        updateLiveReports();
+    });
+
+    liveReportsTab.addEventListener("hide.bs.tab", resetLiveReports);
+
+    function resetLiveReports() {
+        if (liveChart) {
+            liveChart.data.labels = [];
+            liveChart.data.datasets = [];
+            liveChart.update();
+        }
+        if (updateCoinValueInterval) {
+            clearInterval(updateCoinValueInterval);
+            updateCoinValueInterval = null;
+        }
+    }
     getAllCoins();
     console.log(`last`)
 })()
