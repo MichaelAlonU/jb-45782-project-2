@@ -1,10 +1,8 @@
 "use strict";
 
 (async () => {
-    console.log(`start of IFFIE ! `)
     const API_KEY = 'dab64beddf0b0eb28835141a18654de41cca1a50e950d60876c6d419b46fa709'
-    // const CACHE_AGE_IN_SECONDS = 30
-    const CACHE_AGE_IN_SECONDS = 9999999
+    let CACHE_AGE_IN_SECONDS = 120
     const progressBarHTML = () => `
                 <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
                     <span class="visually-hidden">Loading...</span>
@@ -27,24 +25,18 @@
         if (data) {
             data = JSON.parse(data)
             const { data: cachedData, createdAt } = data
-            console.log(new Date(createdAt).getTime() + CACHE_AGE_IN_SECONDS * 1000)
-            console.log(data)
             if ((new Date(createdAt).getTime() + CACHE_AGE_IN_SECONDS * 1000) > new Date().getTime()) {
                 console.log('cache hit, retriveing data from cache')
-                console.log(cachedData)
-                // console.log(apiData.data)
-                return cachedData //.data;  //because it's a object with timestamp, and data.
+                return cachedData 
             }
         }
         data = await fetch(url, { headers: { Authorization: `Bearer ${apiKey}` } }).then(response => response.json())
-        data = data.data //.data   ????
+        data = data.data
         localStorage.setItem(url, JSON.stringify({ data, createdAt: new Date() }))
         console.log('cache miss')
-        console.log(data)
         return data.data || data
     }
     const getNumOfCoinsData = (tokenData, num) => {
-        console.log(`some one called get num of coins to reduce coins ` + !Array.isArray(tokenData))
         if (!Array.isArray(tokenData) || tokenData.length === 0) {
             console.log(`something's wrong, No tokens!!`)
             return [];
@@ -86,7 +78,6 @@
     const generateCoinsHTML = (data, coinSearchValue) => {
         let coinsHtml = ``;
         let htmlSingleCoinCard = ``;
-        console.log(`just before creating HTML, here is the search: ${coinSearchValue}`)
         if (!coinSearchValue) {  //generate all coins in array (already reduced)
             coinsHtml = data.map(({ name, symbol }) => {
                 htmlSingleCoinCard = drawSingleCoinCardHtml(name, symbol);
@@ -100,23 +91,23 @@
                 return drawSingleCoinCardHtml(foundCoin.name, foundCoin.symbol)
             }
 
-            /* To allow search also by name, and show all relevant coins change this "else" with:
-                const searchValue = coinSearchValue.toLowerCase();
-                const foundCoins = data.filter(token => {
-                    return (
-                        token.symbol.toLowerCase().includes(searchValue) ||
-                        token.name.toLowerCase().includes(searchValue)
-                    );
-                });
-                if (foundCoins.length > 0) {
-                    coinsHtml = foundCoins.map(({ name, symbol }) => {
-                        return drawSingleCoinCardHtml(name, symbol);
-                    }).join(``);
-                    return coinsHtml;
-    
-                */
+            // To allow search also by name, and show all relevant coins change this "else" with:
+            /*  const searchValue = coinSearchValue.toLowerCase();
+                    const foundCoins = data.filter(token => {
+                        return (
+                            token.symbol.toLowerCase().includes(searchValue) ||
+                            token.name.toLowerCase().includes(searchValue)
+                        );
+                    });
+                    if (foundCoins.length > 0) {
+                        coinsHtml = foundCoins.map(({ name, symbol }) => {
+                            return drawSingleCoinCardHtml(name, symbol);
+                        }).join(``);
+                        return coinsHtml;
+        
+                    */
             else {
-                return `<h1> No coin's were found, you can  
+                return `<h1 style="color:white"> No coin's were found, you can  
                     <span id="show-all-coins" style="color:blue; cursor:pointer;"> press here </span>
                     to see all coins or try again </h1>`
             }
@@ -157,21 +148,19 @@
                     const coin = tokens.find(token => token.symbol === symbol);
                     let coinEurRate, coinIlsRate, priceEur, priceIls;
                     if (!Array.isArray(tokensRates)) {
-                        console.warn('tokensRates is not an array!', tokensRates);
                     } else {
                         coinEurRate = tokensRates.find(rate => rate.symbol === "EUR");
                         coinIlsRate = tokensRates.find(rate => rate.symbol === "ILS");
                         priceEur = parseFloat(coin.priceUsd) / parseFloat(coinEurRate.rateUsd);
                         priceIls = parseFloat(coin.priceUsd) / parseFloat(coinIlsRate.rateUsd);
                     }
-                    console.log(coinEurRate, coinIlsRate)
                     if (coin) {
                         infoDiv.innerHTML = `
                         <strong>Name:</strong> ${coin.name}<br>
                         <strong>Symbol:</strong> ${coin.symbol}<br>
                         <strong>Price USD:</strong> ${Number(parseFloat(coin.priceUsd).toFixed(2)).toLocaleString()}$<br>
-                        <strong>Price EUR:</strong> ${Number(priceEur.toFixed(2)).toLocaleString()} ${coinEurRate.currencySymbol}<br>
-                        <strong>Price ILS:</strong> ${Number(priceIls.toFixed(2)).toLocaleString()} ${coinIlsRate.currencySymbol}<br>
+                        <strong>Price EUR:</strong> ${Number(priceEur.toFixed(2)).toLocaleString()}${coinEurRate.currencySymbol}<br>
+                        <strong>Price ILS:</strong> ${Number(priceIls.toFixed(2)).toLocaleString()}${coinIlsRate.currencySymbol}<br>
                     `;
                     } else {
                         infoDiv.innerHTML = "No additional info found.";
@@ -194,19 +183,22 @@
                 }
             });
         });
+        activeToggles.forEach(sym => {
+            const checkbox = document.getElementById(`flexSwitchCheckDefault-${sym}`);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        });
+
     }
 
     // all coins data for home tab
     const getAllCoins = async () => {
-        console.log(`some one activated get all coins and it's starting to run....`)
         showProgressBar()
         try {
             const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
-            console.log(tokens)
             const reducedTokens = getNumOfCoinsData(tokens, 99);
-            console.log(reducedTokens)
             let html = generateCoinsHTML(reducedTokens)
-            console.log(`some one activated get all coins and it's almost finished this is html:`);
             renderCoinsHTML(html)
         }
         catch (error) {
@@ -221,7 +213,6 @@
     const searchForm = document.getElementById("search-form");
     searchForm.addEventListener("submit", async event => {
         event.preventDefault();
-        console.log(`searchhhhhhhhhhhhhhhhhhhhh`)
         const coinSearchId = searchInput.value.trim().toUpperCase();
         if (coinSearchId !== "") {
             showProgressBar()
@@ -229,7 +220,6 @@
                 const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY)
                 const reducedTokens = getNumOfCoinsData(tokens, 99);
                 let html = generateCoinsHTML(reducedTokens, coinSearchId)
-                console.log(html)
                 renderCoinsHTML(html)
             }
             catch (error) {
@@ -245,7 +235,11 @@
     })
 
     let activeToggles = [];
-    //    document.getElementById("clear").addEventListener("click", activeToggles.clear()) //see if it's stop `checked` false or stay true 
+
+    document.getElementById("clear").addEventListener("click", () => {  //clear selections
+        document.querySelectorAll('.form-check-input').forEach(toggle => { toggle.checked = false })
+        activeToggles.length = 0;
+    })
 
     document.addEventListener("change", (event) => {
         if (event.target.classList.contains("form-check-input")) {
@@ -259,20 +253,19 @@
             }
         }
     });
+
     function handleToggleOn(symbol, checkbox) {
         if (activeToggles.length >= 5) {
-            checkbox.checked = false; // immediately revert
+            checkbox.checked = false;
             showLimitModal(symbol);
             return;
         }
-
         activeToggles.push(symbol);
-        //        updateLiveReports();
     }
     function handleToggleOff(symbol) {
         activeToggles = activeToggles.filter(s => s !== symbol);
-        //       updateLiveReports();
     }
+
     function showLimitModal(newSymbol) {
         const modalBody = document.getElementById("checked-coins");
         modalBody.innerHTML = activeToggles.map(sym => `
@@ -305,8 +298,8 @@
         liveChart = new Chart(ctx, {
             type: "line",
             data: {
-                labels: [],
-                datasets: []
+                labels: [],  //Y values (the current price)
+                datasets: []    //X values
             },
             options: {
                 animation: false,
@@ -358,13 +351,15 @@
                     chosenCoinDS.data.push(price || null);
                 }
                 liveChart.update();
-            }, 6000);
+            }, 2000);
         }
     }
 
     async function fetchCoinPrice(symbol) {
         try {
+            CACHE_AGE_IN_SECONDS = 0; //forcing fetch to get live data for live reports
             const tokens = await getCoinsData('https://rest.coincap.io/v3/assets', API_KEY);
+            CACHE_AGE_IN_SECONDS = 120;
             const coin = tokens.find(token => token.symbol === symbol);
             return coin ? parseFloat(coin.priceUsd) : null;
         } catch (err) {
@@ -393,5 +388,4 @@
         }
     }
     getAllCoins();
-    console.log(`last`)
 })()
